@@ -18,11 +18,16 @@ yarn build
 yarn start
 ```
 
-The Node app requires `DATABASE_URL` and a `SESSION_SECRET` containing at least
-32 characters. Render generates the session secret from the Blueprint. See
-`.env.example` for local configuration.
+The Node app uses PostgreSQL when `DATABASE_URL` is set (as in the Render
+Blueprint) and MariaDB/MySQL for local XAMPP development. It also requires a
+`SESSION_SECRET` containing at least 32 characters. Render generates the
+session secret from the Blueprint. See `.env.example` for local configuration.
 
-For local development, create `.env.local` with either `DATABASE_URL` or the
-`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` settings used by
-the PHP app. Load `backend/database/schema.sql` into the local PostgreSQL
-database before using registration and other database-backed pages.
+For local development, start MySQL from the XAMPP Control Panel and import
+`backend/database/schema.mysql.sql` into MariaDB. Configure `.env.local` with
+`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and `SESSION_SECRET`.
+The default XAMPP root account has no password; use that only for local
+development and set a password or restricted database user before exposing
+MariaDB to other machines.
+The original `backend/database/schema.sql` and PHP database configuration
+remain PostgreSQL-specific for the legacy PHP application.

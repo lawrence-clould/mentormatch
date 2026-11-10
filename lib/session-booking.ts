@@ -1,5 +1,5 @@
 import "server-only";
-import { getPool } from "@/lib/db";
+import { getDatabaseDialect, getPool } from "@/lib/db";
 
 interface BookingInput {
   mentorId: unknown;
@@ -88,13 +88,27 @@ function validateBookingInput(input: BookingInput) {
 export async function createSessionBooking(menteeId: string, input: BookingInput): Promise<BookingResult> {
   const booking = validateBookingInput(input);
   const client = await getPool().connect();
+  const databaseDialect = getDatabaseDialect();
+  const lockName = `booking:${booking.mentorId}:${booking.sessionDate}`;
+  let mysqlLockAcquired = false;
 
   try {
-    await client.query("BEGIN");
-    await client.query(
-      "SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))",
-      [booking.mentorId, booking.sessionDate],
-    );
+    await client.query("START TRANSACTION");
+    if (databaseDialect === "mysql") {
+      const lock = await client.query<{ lock_acquired: number | null }>(
+        "SELECT GET_LOCK(?, 10) AS lock_acquired",
+        [lockName],
+      );
+      if (Number(lock.rows[0]?.lock_acquired) !== 1) {
+        throw new BookingError("Booking is busy. Please try again.", 409);
+      }
+      mysqlLockAcquired = true;
+    } else {
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))",
+        [booking.mentorId, booking.sessionDate],
+      );
+    }
 
     const semester = await client.query<{ id: string }>(
       "SELECT id FROM semesters WHERE status = 'active' ORDER BY id DESC LIMIT 1",
@@ -107,10 +121,10 @@ export async function createSessionBooking(menteeId: string, input: BookingInput
     const eligibleMentor = await client.query<{ rate_per_hour: string }>(
       `SELECT r.rate_per_hour
        FROM users u
-       JOIN mentor_rates r ON r.mentor_id = u.id AND r.course_code = $2
+       JOIN mentor_rates r ON r.mentor_id = u.id AND r.course_code = ?
        JOIN mentor_applications ma ON ma.mentor_id = u.id AND ma.course_code = r.course_code
-       WHERE u.id = $1 AND u.role = 'mentor' AND u.status = 'active'
-         AND ma.status = 'approved' AND ma.semester_id = $3
+       WHERE u.id = ? AND u.role = 'mentor' AND u.status = 'active'
+         AND ma.status = 'approved' AND ma.semester_id = ?
          AND EXISTS (
            SELECT 1 FROM subscriptions sub
            WHERE sub.user_id = u.id AND sub.status = 'active' AND sub.expires_at > NOW()
@@ -126,11 +140,11 @@ export async function createSessionBooking(menteeId: string, input: BookingInput
     const menteeSubscription = await client.query<{ active: boolean }>(
       `SELECT EXISTS (
          SELECT 1 FROM subscriptions
-         WHERE user_id = $1 AND status = 'active' AND expires_at > NOW()
+         WHERE user_id = ? AND status = 'active' AND expires_at > NOW()
        ) AS active`,
       [menteeId],
     );
-    if (menteeSubscription.rows[0]?.active !== true) {
+    if (!Boolean(menteeSubscription.rows[0]?.active)) {
       throw new BookingError("An active subscription is required to book a session.", 403);
     }
 
@@ -142,8 +156,8 @@ export async function createSessionBooking(menteeId: string, input: BookingInput
 
     const availability = await client.query(
       `SELECT 1 FROM mentor_availability
-       WHERE mentor_id = $1 AND day_of_week = $2 AND is_recurring = 1
-         AND start_time <= $3::time AND end_time >= $4::time
+       WHERE mentor_id = ? AND day_of_week = ? AND is_recurring = 1
+         AND start_time <= ? AND end_time >= ?
        LIMIT 1`,
       [booking.mentorId, booking.dayOfWeek, startTime, endTime],
     );
@@ -153,11 +167,14 @@ export async function createSessionBooking(menteeId: string, input: BookingInput
 
     const sessionStart = `${booking.sessionDate} ${startTime}`;
     const sessionEnd = `${booking.sessionDate} ${endTime}`;
+    const sessionEndExpression = databaseDialect === "mysql"
+      ? "DATE_ADD(session_date, INTERVAL duration_minutes MINUTE)"
+      : "session_date + duration_minutes * INTERVAL '1 minute'";
     const conflicts = await client.query(
       `SELECT 1 FROM sessions
-       WHERE mentor_id = $1 AND status IN ('pending', 'confirmed')
-         AND session_date < $2::timestamp
-         AND session_date + duration_minutes * INTERVAL '1 minute' > $3::timestamp
+       WHERE mentor_id = ? AND status IN ('pending', 'confirmed')
+         AND session_date < ?
+         AND ${sessionEndExpression} > ?
        LIMIT 1`,
       [booking.mentorId, sessionEnd, sessionStart],
     );
@@ -167,9 +184,9 @@ export async function createSessionBooking(menteeId: string, input: BookingInput
 
     const menteeConflicts = await client.query(
       `SELECT 1 FROM sessions
-       WHERE mentee_id = $1 AND status IN ('pending', 'confirmed')
-         AND session_date < $2::timestamp
-         AND session_date + duration_minutes * INTERVAL '1 minute' > $3::timestamp
+       WHERE mentee_id = ? AND status IN ('pending', 'confirmed')
+         AND session_date < ?
+         AND ${sessionEndExpression} > ?
        LIMIT 1`,
       [menteeId, sessionEnd, sessionStart],
     );
@@ -185,7 +202,7 @@ export async function createSessionBooking(menteeId: string, input: BookingInput
          (mentor_id, mentee_id, semester_id, course_code, session_date,
           duration_minutes, mentor_rate, total_amount, admin_fee, mentor_payout,
           status, payment_status)
-       VALUES ($1, $2, $3, $4, $5::timestamp, $6, $7, $8, $9, $10, 'pending', 'pending')
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')
        RETURNING id`,
       [
         booking.mentorId,
@@ -200,13 +217,13 @@ export async function createSessionBooking(menteeId: string, input: BookingInput
         mentorPayout,
       ],
     );
-    const sessionId = created.rows[0]?.id;
+    const sessionId = created.insertId ? String(created.insertId) : created.rows[0]?.id;
     if (!sessionId) {
       throw new Error("Session booking did not return an ID.");
     }
 
     await client.query(
-      "INSERT INTO system_logs (user_id, action) VALUES ($1, $2)",
+      "INSERT INTO system_logs (user_id, action) VALUES (?, ?)",
       [menteeId, `Booked session #${sessionId} with mentor #${booking.mentorId}`],
     );
     await client.query("COMMIT");
@@ -223,6 +240,12 @@ export async function createSessionBooking(menteeId: string, input: BookingInput
     await client.query("ROLLBACK");
     throw error;
   } finally {
-    client.release();
+    try {
+      if (mysqlLockAcquired) {
+        await client.query("SELECT RELEASE_LOCK(?)", [lockName]);
+      }
+    } finally {
+      client.release();
+    }
   }
 }

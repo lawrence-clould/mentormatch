@@ -1,8 +1,5 @@
 node_modules/
 .next/
-out/
-coverage/
 .env
-.env.*
-!.env.example
-yarn-error.log
+.env.local
+.DS_Store

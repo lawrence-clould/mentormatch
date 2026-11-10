@@ -1,5 +1,5 @@
 import "server-only";
-import { getPool } from "@/lib/db";
+import { getPool, type SqlValue } from "@/lib/db";
 
 export type MentorSearchType = "all" | "course" | "mentor" | "programme" | "topic";
 export type MentorSort = "relevance" | "rating" | "price" | "name";
@@ -49,19 +49,19 @@ function getSearchTerms(query: string, type: MentorSearchType): string[] {
     }
   }
 
-  return [...new Set(terms)].map((term) => `%${term.replace(/[\\%_]/g, "\\$&")}%`);
+  return [...new Set(terms)].map((term) => `%${term.replace(/[!%_]/g, "!$&")}%`);
 }
 
 export async function searchMentors(
   semesterId: string,
   options: MentorSearchOptions,
 ): Promise<MentorSearchResult[]> {
-  const values: unknown[] = [semesterId];
+  const values: SqlValue[] = [semesterId];
   const filters = [
     "u.role = 'mentor'",
     "u.status = 'active'",
     "ma.status = 'approved'",
-    "ma.semester_id = $1",
+    "ma.semester_id = ?",
     `EXISTS (
       SELECT 1 FROM subscriptions sub
       WHERE sub.user_id = u.id AND sub.status = 'active' AND sub.expires_at > NOW()
@@ -70,8 +70,6 @@ export async function searchMentors(
 
   const terms = getSearchTerms(options.query, options.type);
   if (terms.length > 0) {
-    values.push(terms);
-    const termParameter = `$${values.length}::text[]`;
     const searchColumns = options.type === "course"
       ? ["r.course_code", "c.course_name", "ma.course_name"]
       : options.type === "mentor"
@@ -79,13 +77,16 @@ export async function searchMentors(
         : options.type === "programme"
           ? ["u.programme"]
           : ["u.name", "u.programme", "r.course_code", "c.course_name", "ma.course_name"];
-    filters.push(`(${searchColumns.map((column) => `${column} ILIKE ANY(${termParameter})`).join(" OR ")})`);
+    const searchConditions = searchColumns.flatMap((column) =>
+      terms.map(() => `LOWER(${column}) LIKE LOWER(?) ESCAPE '!'`));
+    filters.push(`(${searchConditions.join(" OR ")})`);
+    values.push(...searchColumns.flatMap(() => terms));
   }
 
   values.push(options.minRating);
-  filters.push(`COALESCE((SELECT AVG(f.rating) FROM feedback f WHERE f.mentor_id = u.id), 0) >= $${values.length}`);
+  filters.push("COALESCE((SELECT AVG(f.rating) FROM feedback f WHERE f.mentor_id = u.id), 0) >= ?");
   values.push(options.maxRate);
-  filters.push(`r.rate_per_hour <= $${values.length}`);
+  filters.push("r.rate_per_hour <= ?");
 
   const ordering: Record<MentorSort, string> = {
     relevance: "avg_rating DESC, total_reviews DESC, u.name ASC",

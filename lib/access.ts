@@ -11,7 +11,7 @@ export async function getActiveUser(role?: UserRole): Promise<AuthenticatedUser 
   const result = await getPool().query<AuthenticatedUser>(
     `SELECT id, name, email, role, status
      FROM users
-     WHERE id = $1 AND status = 'active'
+     WHERE id = ? AND status = 'active'
      LIMIT 1`,
     [session.user.id],
   );
@@ -37,7 +37,7 @@ export async function getRequestUser(request: Request, role?: UserRole): Promise
   const result = await getPool().query<AuthenticatedUser>(
     `SELECT id, name, email, role, status
      FROM users
-     WHERE api_token = $1 AND status = 'active'
+     WHERE api_token = ? AND status = 'active'
      LIMIT 1`,
     [match[1]],
   );
@@ -53,11 +53,11 @@ export async function hasActiveSubscription(userId: string): Promise<boolean> {
     `SELECT EXISTS (
        SELECT 1
        FROM subscriptions
-       WHERE user_id = $1
+       WHERE user_id = ?
          AND status = 'active'
          AND expires_at > NOW()
      ) AS active`,
     [userId],
   );
-  return result.rows[0]?.active === true;
+  return Boolean(result.rows[0]?.active);
 }

@@ -17,7 +17,7 @@ export async function authenticateUser(
   const result = await getPool().query<UserRecord>(
     `SELECT id, name, email, role, status, password, phone
      FROM users
-     WHERE LOWER(email) = LOWER($1)
+     WHERE LOWER(email) = LOWER(?)
      LIMIT 1`,
     [email.trim()],
   );
@@ -99,21 +99,22 @@ export async function registerUser(input: RegistrationInput): Promise<void> {
   try {
     await client.query("BEGIN");
 
-    let semesterResult = await client.query<{ id: string }>(
+    const semesterResult = await client.query<{ id: string }>(
       `SELECT id FROM semesters WHERE status = 'active' ORDER BY id DESC LIMIT 1`,
     );
-    if (!semesterResult.rows[0]) {
+    let semesterId: string | undefined = semesterResult.rows[0]?.id;
+    if (!semesterId) {
       const currentYear = new Date().getFullYear();
-      semesterResult = await client.query<{ id: string }>(
+      const createdSemester = await client.query(
         `INSERT INTO semesters
            (semester_name, start_date, end_date, registration_open, registration_close, status)
-         VALUES ($1, CURRENT_DATE, CURRENT_DATE + INTERVAL '6 months',
-                 CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'active')
-         RETURNING id`,
+           VALUES (?, CURRENT_DATE, CURRENT_DATE + INTERVAL '6 months',
+                   CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'active')
+           RETURNING id`,
         [`${currentYear}-1`],
       );
+      semesterId = createdSemester.insertId ? String(createdSemester.insertId) : undefined;
     }
-    const semesterId = semesterResult.rows[0]?.id;
     if (!semesterId) {
       throw new Error("Could not find or create an active semester.");
     }
@@ -121,7 +122,7 @@ export async function registerUser(input: RegistrationInput): Promise<void> {
     let courseName = input.courseName.trim();
     if (input.courseCode) {
       const courseResult = await client.query<{ course_name: string }>(
-        "SELECT course_name FROM courses WHERE course_code = $1 LIMIT 1",
+        "SELECT course_name FROM courses WHERE course_code = ? LIMIT 1",
         [input.courseCode],
       );
       if (courseResult.rows[0]) {
@@ -129,7 +130,7 @@ export async function registerUser(input: RegistrationInput): Promise<void> {
       } else {
         courseName ||= `${input.courseCode} (Custom)`;
         await client.query(
-          "INSERT INTO courses (course_code, course_name) VALUES ($1, $2) ON CONFLICT (course_code) DO NOTHING",
+          "INSERT INTO courses (course_code, course_name) VALUES (?, ?) ON CONFLICT (course_code) DO NOTHING",
           [input.courseCode, courseName],
         );
       }
@@ -138,7 +139,7 @@ export async function registerUser(input: RegistrationInput): Promise<void> {
     const userResult = await client.query<{ id: string }>(
       `INSERT INTO users
          (name, email, phone, password, role, programme, year_of_study, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
        RETURNING id`,
       [
         input.name,
@@ -150,7 +151,7 @@ export async function registerUser(input: RegistrationInput): Promise<void> {
         input.yearOfStudy || null,
       ],
     );
-    const userId = userResult.rows[0]?.id;
+    const userId = userResult.insertId ? String(userResult.insertId) : undefined;
     if (!userId) {
       throw new Error("Account creation did not return a user ID.");
     }
@@ -159,14 +160,14 @@ export async function registerUser(input: RegistrationInput): Promise<void> {
       await client.query(
         `INSERT INTO mentor_applications
            (mentor_id, semester_id, course_code, course_name, grade, status)
-         VALUES ($1, $2, $3, $4, $5, 'pending')`,
+         VALUES (?, ?, ?, ?, ?, 'pending')`,
         [userId, semesterId, input.courseCode, courseName, input.grade],
       );
     } else {
       await client.query(
         `INSERT INTO mentee_enrollments
            (mentee_id, semester_id, course_code, course_name, status)
-         VALUES ($1, $2, $3, $4, 'pending')`,
+         VALUES (?, ?, ?, ?, 'pending')`,
         [
           userId,
           semesterId,
@@ -177,7 +178,7 @@ export async function registerUser(input: RegistrationInput): Promise<void> {
     }
 
     await client.query(
-      "INSERT INTO system_logs (user_id, action) VALUES ($1, $2)",
+      "INSERT INTO system_logs (user_id, action) VALUES (?, ?)",
       [userId, `User registered as ${input.role}`],
     );
     await client.query("COMMIT");
@@ -187,7 +188,7 @@ export async function registerUser(input: RegistrationInput): Promise<void> {
       typeof error === "object"
       && error !== null
       && "code" in error
-      && error.code === "23505"
+      && (error.code === "ER_DUP_ENTRY" || error.code === "23505")
     ) {
       throw new AuthenticationError("Email or phone number is already registered.");
     }

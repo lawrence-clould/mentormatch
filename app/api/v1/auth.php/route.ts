@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   const result = await getPool().query<LoginUser>(
     `SELECT id, name, email, role, status, password
      FROM users
-     WHERE LOWER(email) = LOWER($1)
+     WHERE LOWER(email) = LOWER(?)
      LIMIT 1`,
     [email],
   );
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   }
 
   const token = randomBytes(32).toString("hex");
-  await getPool().query("UPDATE users SET api_token = $1 WHERE id = $2", [token, user.id]);
+  await getPool().query("UPDATE users SET api_token = ? WHERE id = ?", [token, user.id]);
   return withApiCors(Response.json({
       success: true,
       data: {

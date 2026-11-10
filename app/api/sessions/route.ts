@@ -1,5 +1,5 @@
 import { getRequestUser, hasActiveSubscription } from "@/lib/access";
-import { getPool } from "@/lib/db";
+import { getPool, type SqlValue } from "@/lib/db";
 import { createSessionBooking, BookingError } from "@/lib/session-booking";
 
 interface SessionQueryResult {
@@ -27,14 +27,14 @@ export async function GET(request: Request) {
     return Response.json({ success: false, message: "You cannot view another user's sessions." }, { status: 403 });
   }
   const status = parameters.get("status");
-  const values: unknown[] = [user.id];
-  const filters = [user.role === "mentor" ? "s.mentor_id = $1" : "s.mentee_id = $1"];
+  const values: SqlValue[] = [user.id];
+  const filters = [user.role === "mentor" ? "s.mentor_id = ?" : "s.mentee_id = ?"];
   if (status) {
     if (!["pending", "confirmed", "completed", "cancelled", "no_show"].includes(status)) {
       return Response.json({ success: false, message: "Invalid session status." }, { status: 400 });
     }
     values.push(status);
-    filters.push(`s.status = $${values.length}`);
+    filters.push("s.status = ?");
   }
 
   const result = await getPool().query<SessionQueryResult>(

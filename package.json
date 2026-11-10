@@ -13,6 +13,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "iron-session": "^9.0.1",
+    "mysql2": "^3.24.6",
     "next": "^16.4.3",
     "pg": "^8.23.1",
     "react": "^19.2.0",
