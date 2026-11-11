@@ -25,3 +25,25 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// NEW: Cancel the session (Soft Delete)
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const pool = await getPool();
+
+    // Update status to cancelled
+    await pool.query(
+      "UPDATE sessions SET status = 'cancelled' WHERE id = $1",
+      [id]
+    );
+
+    return NextResponse.json({ ok: true, message: "Session cancelled" });
+  } catch (error: any) {
+    console.error("Cancel Error:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

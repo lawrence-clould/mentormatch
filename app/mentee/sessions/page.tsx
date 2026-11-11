@@ -43,6 +43,24 @@ export default function MenteeSessions() {
     }
   };
 
+  const handleCancel = async (id: number) => {
+    if (!confirm("Are you sure you want to cancel this session? This cannot be undone.")) return;
+    
+    try {
+      const res = await fetch(`/api/mentee/sessions/${id}`, {
+        method: "DELETE",
+      });
+      
+      if (res.ok) {
+        fetchSessions(); // Refresh the table
+      } else {
+        alert("Failed to cancel session");
+      }
+    } catch (err) {
+      alert("An error occurred");
+    }
+  };
+
   const filteredSessions = sessions.filter((s) => {
     if (filter === "all") return true;
     if (filter === "upcoming") return s.status === "pending" || s.status === "confirmed";
@@ -125,6 +143,17 @@ export default function MenteeSessions() {
                         <Link href={`/mentee/sessions/${session.id}`} className="btn btn-sm btn-primary">
                           <i className="bi bi-eye"></i> View
                         </Link>
+
+                        {/* Cancel Button added here */}
+                        {session.status !== "cancelled" && session.status !== "completed" && (
+                          <button 
+                            className="btn btn-sm btn-outline-danger ms-1" 
+                            onClick={() => handleCancel(session.id)}
+                          >
+                            <i className="bi bi-x-circle"></i> Cancel
+                          </button>
+                        )}
+
                         {session.payment_status === "pending" && (
                           <button 
                             className="btn btn-sm btn-success ms-1" 
