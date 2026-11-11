@@ -5,7 +5,6 @@ export async function GET() {
   try {
     const pool = await getPool();
     
-    // 1. Get all users with their application data (if any)
     const res: any = await pool.query(`
       SELECT 
         u.id, u.name, u.email, u.phone, u.programme, u.year_of_study, u.role, u.status, u.created_at,
@@ -16,20 +15,19 @@ export async function GET() {
       ORDER BY u.created_at DESC
     `);
 
-    // 2. Calculate stats
     const users = res.rows;
-    const activeUsers = users.filter(u => u.status === 'active');
-    const pendingApps = users.filter(u => u.status === 'pending');
-    const approvedMentors = users.filter(u => u.role === 'mentor' && u.status === 'active');
+    const activeUsers = users.filter((u: any) => u.status === 'active');
+    const pendingApps = users.filter((u: any) => u.status === 'pending');
+    const approvedMentors = users.filter((u: any) => u.role === 'mentor' && u.status === 'active');
     
     return NextResponse.json({
       users,
       stats: {
         activeUsers: activeUsers.length,
         activeMentors: approvedMentors.length,
-        activeMentees: activeUsers.filter(u => u.role === 'mentee').length,
+        activeMentees: activeUsers.filter((u: any) => u.role === 'mentee').length,
         pendingApps: pendingApps.length,
-        totalApproved: activeUsers.length, // Simplified for now
+        totalApproved: activeUsers.length, 
       }
     });
   } catch (error: any) {

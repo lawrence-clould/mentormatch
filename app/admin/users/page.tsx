@@ -64,11 +64,11 @@ export default function AdminUsers() {
   if (loading && users.length === 0) return <div className="text-center py-5">Loading users...</div>;
   if (error) return <div className="text-center py-5 text-danger">{error}</div>;
 
-  // Calculate stats dynamically
+  // FIXED: Added : any to prevent TypeScript errors
   const totalUsers = users.length;
-  const activeMentors = users.filter(u => u.role === 'mentor' && u.status === 'active').length;
-  const activeMentees = users.filter(u => u.role === 'mentee' && u.status === 'active').length;
-  const pendingUsers = users.filter(u => u.status === 'pending').length;
+  const activeMentors = users.filter((u: any) => u.role === 'mentor' && u.status === 'active').length;
+  const activeMentees = users.filter((u: any) => u.role === 'mentee' && u.status === 'active').length;
+  const pendingUsers = users.filter((u: any) => u.status === 'pending').length;
 
   return (
     <div className="container-fluid mt-4">
@@ -126,7 +126,7 @@ export default function AdminUsers() {
 
       {/* Users Grid */}
       <div className="row g-4">
-        {users.map((user) => (
+        {users.map((user: any) => (
           <div className="col-xl-4 col-lg-6 col-md-6" key={user.id}>
             <div className="card user-card h-100 shadow-sm border-0">
               <div className="card-body">
