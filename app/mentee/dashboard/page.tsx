@@ -10,25 +10,31 @@ export default function MenteeDashboard() {
     completedSessions: 0,
     upcomingSessions: 0,
     totalSpent: 0,
+    feedbackGiven: 0, // Added this
   });
   const [recentSessions, setRecentSessions] = useState<any[]>([]);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch("/api/mentee/stats");
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data.stats);
-          setRecentSessions(data.recentSessions);
-        }
-      } catch (error) {
-        console.error("Failed to load dashboard", error);
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    try {
+      const res = await fetch("/api/mentee/stats");
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data.stats);
+        setRecentSessions(data.recentSessions);
       }
+    } catch (error) {
+      console.error("Failed to load dashboard", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchData();
+
+    // Real-time auto-refresh every 10 seconds
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -84,7 +90,8 @@ export default function MenteeDashboard() {
           <div className="card bg-info text-white shadow">
             <div className="card-body">
               <h6 className="card-title">Feedback Given</h6>
-              <h2 className="mb-0">{loading ? "..." : 0}</h2>
+              {/* Now pulls from live API */}
+              <h2 className="mb-0">{loading ? "..." : stats.feedbackGiven}</h2>
               <small>Help others improve</small>
             </div>
           </div>
@@ -115,7 +122,7 @@ export default function MenteeDashboard() {
         </div>
       </div>
 
-      {/* Recent Sessions Placeholder */}
+      {/* Recent Sessions Table */}
       <div className="card shadow mb-4">
         <div className="card-header d-flex justify-content-between align-items-center">
           <h6 className="mb-0"><i className="bi bi-clock-history"></i> Recent Sessions</h6>
@@ -145,12 +152,12 @@ export default function MenteeDashboard() {
                       <td>{session.course_code}</td>
                       <td>{new Date(session.session_date).toLocaleDateString()}</td>
                       <td>
-                        <span className={`badge bg-${session.status === "completed" ? "success" : "warning"}`}>
+                        <span className={`badge bg-${session.status === "completed" ? "success" : session.status === "confirmed" ? "primary" : "warning"}`}>
                           {session.status}
                         </span>
                       </td>
                       <td>
-                        <span className={`badge bg-${session.payment_status === "released_to_mentor" ? "success" : "info"}`}>
+                        <span className={`badge bg-${session.payment_status === "released_to_mentor" ? "success" : session.payment_status === "paid_to_admin" ? "info" : "secondary"}`}>
                           {session.payment_status}
                         </span>
                       </td>
