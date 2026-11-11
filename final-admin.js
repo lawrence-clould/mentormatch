@@ -12,24 +12,33 @@ rl.question('Paste your External Database URL here: ', async (url) => {
   try {
     await client.connect();
     
-    // ⚠️ REPLACE THESE WITH YOUR REAL EMAIL AND PASSWORD ⚠️
     const adminEmail = 'maxwellmbamina5@gmail.com'; 
     const adminPassword = 'User@123';
+    const adminName = 'System Admin';
     
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(adminPassword, salt);
 
-    // 1. Delete the placeholder account we accidentally made
-    await client.query(`DELETE FROM users WHERE email = 'maxwellmbamina5@gmail.com'`);
+    // Check if user exists first
+    const checkUser = await client.query('SELECT id FROM users WHERE email = $1', [adminEmail]);
+    
+    if (checkUser.rows.length > 0) {
+        // Update existing user
+        await client.query(
+            'UPDATE users SET password = $1, role = $2, status = $3 WHERE email = $4',
+            [hash, 'admin', 'active', adminEmail]
+        );
+        console.log(`✅ Password reset successfully for existing user: ${adminEmail}`);
+    } else {
+        // Insert new user (using 'name', 'phone', and 'password')
+        await client.query(
+            `INSERT INTO users (name, email, phone, password, role, status) 
+             VALUES ($1, $2, $3, $4, 'admin', 'active')`,
+            [adminName, adminEmail, '0960408550', hash]
+        );
+        console.log(`✅ New admin account created: ${adminEmail}`);
+    }
 
-    // 2. Insert your real admin account
-    await client.query(`
-      INSERT INTO users (name, full_name, email, password, password_hash, role, status) 
-      VALUES ('System Admin', 'System Admin', $1, $2, $2, 'admin', 'active')
-      ON CONFLICT (email) DO UPDATE SET password = $2, password_hash = $2, status = 'active';
-    `, [adminEmail, hash]);
-
-    console.log(`✅ Success! Admin account ready for: ${adminEmail}`);
     console.log(`🔑 Password is: ${adminPassword}`);
 
   } catch (err) {
