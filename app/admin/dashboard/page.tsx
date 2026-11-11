@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function AdminDashboard() {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalMentors: 0,
@@ -14,15 +15,20 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    // Mock data so you can see the UI immediately
-    setStats({
-      totalUsers: 15,
-      totalMentors: 5,
-      totalMentees: 10,
-      totalSessions: 42,
-      completedSessions: 38,
-      totalRevenue: 1250.0,
-    });
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/admin/stats");
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error("Failed to load stats", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
   }, []);
 
   return (
@@ -30,7 +36,7 @@ export default function AdminDashboard() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h3><i className="bi bi-speedometer2"></i> Admin Dashboard</h3>
-          <p className="text-muted">Welcome back! Here is what's happening today.</p>
+          <p className="text-muted">Welcome back! Here is what&apos;s happening today.</p>
         </div>
       </div>
 
@@ -41,7 +47,7 @@ export default function AdminDashboard() {
             <div className="card-body position-relative">
               <i className="bi bi-people stat-icon"></i>
               <h6 className="card-title">Total Users</h6>
-              <h2 className="mb-0">{stats.totalUsers}</h2>
+              <h2 className="mb-0">{loading ? "..." : stats.totalUsers}</h2>
               <small>
                 <i className="bi bi-person-check"></i> {stats.totalMentors} Mentors | <i className="bi bi-person"></i> {stats.totalMentees} Mentees
               </small>
@@ -54,7 +60,7 @@ export default function AdminDashboard() {
             <div className="card-body position-relative">
               <i className="bi bi-calendar-check stat-icon"></i>
               <h6 className="card-title">Sessions</h6>
-              <h2 className="mb-0">{stats.totalSessions}</h2>
+              <h2 className="mb-0">{loading ? "..." : stats.totalSessions}</h2>
               <small>
                 <i className="bi bi-check-circle"></i> {stats.completedSessions} Completed
               </small>
@@ -67,7 +73,7 @@ export default function AdminDashboard() {
             <div className="card-body position-relative">
               <i className="bi bi-currency-dollar stat-icon"></i>
               <h6 className="card-title">Revenue</h6>
-              <h2 className="mb-0">K{stats.totalRevenue.toFixed(2)}</h2>
+              <h2 className="mb-0">K{loading ? "..." : stats.totalRevenue.toFixed(2)}</h2>
               <small>Total platform revenue</small>
             </div>
           </div>
