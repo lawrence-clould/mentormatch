@@ -6,8 +6,9 @@ export default function MenteeSessions() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [paying, setPaying] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchSessions = () => {
     fetch("/api/mentee/sessions")
       .then((res) => res.json())
       .then((data) => {
@@ -15,7 +16,32 @@ export default function MenteeSessions() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchSessions();
   }, []);
+
+  const handlePay = async (id: number) => {
+    if (!confirm("Are you sure you want to pay for this session?")) return;
+    setPaying(id.toString());
+
+    try {
+      const res = await fetch(`/api/mentee/sessions/${id}/pay`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Payment failed");
+
+      alert("Payment successful!");
+      fetchSessions(); // Refresh the table
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      setPaying(null);
+    }
+  };
 
   const filteredSessions = sessions.filter((s) => {
     if (filter === "all") return true;
@@ -100,8 +126,12 @@ export default function MenteeSessions() {
                           <i className="bi bi-eye"></i> View
                         </Link>
                         {session.payment_status === "pending" && (
-                          <button className="btn btn-sm btn-success ms-1" onClick={() => alert("Payment integration coming next!")}>
-                            <i className="bi bi-credit-card"></i> Pay
+                          <button 
+                            className="btn btn-sm btn-success ms-1" 
+                            onClick={() => handlePay(session.id)}
+                            disabled={paying === session.id.toString()}
+                          >
+                            <i className="bi bi-credit-card"></i> {paying === session.id.toString() ? "Processing..." : "Pay"}
                           </button>
                         )}
                       </td>
