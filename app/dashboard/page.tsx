@@ -1,28 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logoutAction } from "@/app/login/actions";
-import { getSession } from "@/lib/session";
+import { getIronSession } from "iron-session";
+import { cookies } from "next/headers";
+import { sessionOptions, SessionData } from "@/lib/session";
 
 export default async function DashboardPage() {
-  const session = await getSession();
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   const user = session.user;
   
   if (!user) {
     redirect("/login");
   }
 
-  // 1. If the user is active, automatically redirect them to their specific dashboard
+  // If active, send them to their correct dashboard
   if (user.status === "active") {
-    if (user.role === "mentor") {
-      redirect("/mentor/dashboard");
-    } else if (user.role === "mentee") {
-      redirect("/mentee/dashboard");
-    } else if (user.role === "admin") {
-      redirect("/admin/dashboard");
-    }
+    if (user.role === "mentor") redirect("/mentor/dashboard");
+    if (user.role === "mentee") redirect("/mentee/dashboard");
+    if (user.role === "admin") redirect("/admin/dashboard");
   }
 
-  // 2. If they are pending, show this waiting screen
+  // If pending, show waiting screen
   return (
     <main className="container py-5">
       <section className="card mx-auto p-4 shadow-sm border-0" style={{ maxWidth: 680 }}>
@@ -37,8 +35,6 @@ export default async function DashboardPage() {
         </p>
         
         <div className="d-flex flex-wrap gap-3">
-          {/* Since we added the redirect above, active users never see this page. 
-              Only pending users see this. */}
           <form action={logoutAction}>
             <button type="submit" className="btn btn-outline-secondary px-4 py-2">
               Sign out
