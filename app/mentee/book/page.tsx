@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-const BookForm = dynamic(() => import("./BookForm"), {
+const BookForm = dynamic(() => import("@/components/BookForm"), {
   ssr: false,
   loading: () => <div className="text-center py-5">Loading...</div>,
 });
