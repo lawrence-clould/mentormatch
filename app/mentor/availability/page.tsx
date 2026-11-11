@@ -6,19 +6,53 @@ export default function MentorAvailability() {
   const [day, setDay] = useState("1");
   const [start, setStart] = useState("09:00");
   const [end, setEnd] = useState("17:00");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const loadSlots = () => fetch("/api/mentor/availability").then(r => r.json()).then(setSlots);
+  const loadSlots = async () => {
+    try {
+      const res = await fetch("/api/mentor/availability");
+      const data = await res.json();
+      if (res.ok && Array.isArray(data)) {
+        setSlots(data);
+      } else {
+        setErrorMsg(data.error || "Failed to load slots");
+      }
+    } catch (err) {
+      setErrorMsg("Network error loading slots");
+    }
+  };
 
   useEffect(() => { loadSlots(); }, []);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/mentor/availability", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ day_of_week: parseInt(day), start_time: start, end_time: end }),
-    });
-    loadSlots();
+    setLoading(true);
+    setErrorMsg("");
+    
+    try {
+      const res = await fetch("/api/mentor/availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          day_of_week: parseInt(day), 
+          start_time: start, 
+          end_time: end 
+        }),
+      });
+
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to add slot");
+      }
+
+      loadSlots();
+    } catch (err: any) {
+      setErrorMsg(err.message); 
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -32,6 +66,9 @@ export default function MentorAvailability() {
   return (
     <div>
       <h4 className="mb-4">My Availability</h4>
+      
+      {errorMsg && <div className="alert alert-danger"><strong>Error:</strong> {errorMsg}</div>}
+
       <div className="row g-4">
         <div className="col-md-4">
           <div className="card shadow-sm border-0">
@@ -54,7 +91,9 @@ export default function MentorAvailability() {
                     <input type="time" className="form-control" value={end} onChange={e => setEnd(e.target.value)} required />
                   </div>
                 </div>
-                <button type="submit" className="btn btn-primary w-100">Add Slot</button>
+                <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+                  {loading ? "Adding..." : "Add Slot"}
+                </button>
               </form>
             </div>
           </div>
