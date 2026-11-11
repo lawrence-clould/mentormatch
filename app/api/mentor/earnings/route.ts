@@ -4,11 +4,15 @@ import { getPool } from "@/lib/db";
 export async function GET() {
   try {
     const pool = await getPool();
-    // Find the specific mentor (Dadray Mathotho)
-    const userRes: any = await pool.query("SELECT id FROM users WHERE role = 'mentor' LIMIT 1");
-    const mentorId = userRes.rows[0].id;
+    
+    // 1. Dynamically find the Mentor ID
+    const mentorRes: any = await pool.query("SELECT id FROM users WHERE role = 'mentor' LIMIT 1");
+    if (mentorRes.rows.length === 0) {
+      return NextResponse.json({ error: "No mentor found" }, { status: 404 });
+    }
+    const mentorId = mentorRes.rows[0].id;
 
-    // 1. Get Total & Pending Earnings
+    // 2. Get Total & Pending Earnings
     const totalsRes: any = await pool.query(`
       SELECT 
         COALESCE(SUM(CASE WHEN payment_status = 'released_to_mentor' THEN mentor_payout ELSE 0 END), 0) as total_earned,
@@ -18,7 +22,7 @@ export async function GET() {
       WHERE mentor_id = $1
     `, [mentorId]);
 
-    // 2. Get Earnings by Course
+    // 3. Get Earnings by Course
     const courseRes: any = await pool.query(`
       SELECT course_code, SUM(mentor_payout) as total, COUNT(*) as sessions
       FROM sessions
@@ -27,7 +31,7 @@ export async function GET() {
       ORDER BY total DESC
     `, [mentorId]);
 
-    // 3. Get Recent Payouts
+    // 4. Get Recent Payouts
     const payoutsRes: any = await pool.query(`
       SELECT s.id, s.session_date, s.course_code, s.mentor_payout, u.name as mentee_name
       FROM sessions s
@@ -54,4 +58,4 @@ export async function GET() {
     console.error("Earnings API Error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+}s

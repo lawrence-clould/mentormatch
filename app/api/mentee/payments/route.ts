@@ -4,9 +4,15 @@ import { getPool } from "@/lib/db";
 export async function GET() {
   try {
     const pool = await getPool();
-    const menteeId = 6; // Faith Banda
+    
+    // 1. Dynamically find the Mentee ID
+    const menteeRes: any = await pool.query("SELECT id FROM users WHERE role = 'mentee' LIMIT 1");
+    if (menteeRes.rows.length === 0) {
+      return NextResponse.json({ payments: [], stats: { totalSpent: 0, totalFees: 0, completedCount: 0, pendingCount: 0 } });
+    }
+    const menteeId = menteeRes.rows[0].id;
 
-    // 1. Fetch payment history
+    // 2. Fetch payment history
     const res: any = await pool.query(`
       SELECT 
         p.id, p.amount, p.admin_fee, p.mentor_payout, p.payment_status, p.created_at,
@@ -21,7 +27,7 @@ export async function GET() {
 
     const payments = res.rows;
 
-    // 2. Calculate stats
+    // 3. Calculate stats
     const totalSpent = payments
       .filter((p: any) => p.payment_status === 'captured' || p.payment_status === 'released')
       .reduce((sum: number, p: any) => sum + parseFloat(p.amount), 0);
