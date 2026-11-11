@@ -4,7 +4,7 @@ import { getPool } from "@/lib/db";
 export async function GET() {
   try {
     const pool = await getPool();
-    const mentorId = 1; // placeholder — replace with session auth later
+    const mentorId = 4; // Dadray's actual ID
 
     const total: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1", [mentorId]);
     const completed: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1 AND status = 'completed'", [mentorId]);

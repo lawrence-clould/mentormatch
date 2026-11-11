@@ -7,32 +7,44 @@ const client = new Client({
 client.connect().then(async () => {
   console.log("Connected...");
 
-  // We know from the error log that Faith is ID 6 and Dadray is ID 4
-  const menteeId = 6;
-  const mentorId = 4;
-  
-  // The error said semester_id cannot be null, so we explicitly set it to 1
-  const semesterId = 1; 
+  // 1. Check if a semester exists. If not, create one.
+  let semesterRes = await client.query("SELECT id FROM semesters LIMIT 1");
+  let semesterId;
 
-  console.log(`Using Mentee ID: ${menteeId}, Mentor ID: ${mentorId}, Semester ID: ${semesterId}`);
+  if (semesterRes.rows.length === 0) {
+    console.log("No semesters found. Creating one...");
+    const newSemester = await client.query(`
+      INSERT INTO semesters (semester_name, status, start_date, end_date)
+      VALUES ('Semester 1', 'active', NOW(), NOW() + INTERVAL '6 months')
+      RETURNING id
+    `);
+    semesterId = newSemester.rows[0].id;
+    console.log(`✅ Created new semester with ID: ${semesterId}`);
+  } else {
+    semesterId = semesterRes.rows[0].id;
+    console.log(`Found existing semester with ID: ${semesterId}`);
+  }
 
-  // 1. Insert a completed session
+  const menteeId = 6; // Faith Banda
+  const mentorId = 4; // Dadray Mathotho
+
+  // 2. Insert a completed session
   await client.query(`
     INSERT INTO sessions 
-    (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, total_amount, admin_fee, mentor_payout, status, payment_status)
+    (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, mentor_rate, total_amount, admin_fee, mentor_payout, status, payment_status)
     VALUES 
-    ($1, $2, $3, 'CSC101', NOW() - INTERVAL '2 days', 60, 100.00, 5.00, 95.00, 'completed', 'paid_to_admin')
+    ($1, $2, $3, 'CSC101', NOW() - INTERVAL '2 days', 60, 100.00, 100.00, 5.00, 95.00, 'completed', 'paid_to_admin')
   `, [menteeId, mentorId, semesterId]);
 
-  // 2. Insert an upcoming session
+  // 3. Insert an upcoming session
   await client.query(`
     INSERT INTO sessions 
-    (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, total_amount, admin_fee, mentor_payout, status, payment_status)
+    (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, mentor_rate, total_amount, admin_fee, mentor_payout, status, payment_status)
     VALUES 
-    ($1, $2, $3, 'CSC101', NOW() + INTERVAL '2 days', 60, 100.00, 5.00, 95.00, 'confirmed', 'paid_to_admin')
+    ($1, $2, $3, 'CSC101', NOW() + INTERVAL '2 days', 60, 100.00, 100.00, 5.00, 95.00, 'confirmed', 'paid_to_admin')
   `, [menteeId, mentorId, semesterId]);
 
-  // 3. Insert a feedback entry
+  // 4. Insert a feedback entry
   const sessionRes = await client.query("SELECT id FROM sessions WHERE mentee_id = $1 LIMIT 1", [menteeId]);
   if (sessionRes.rows.length > 0) {
     await client.query(`
