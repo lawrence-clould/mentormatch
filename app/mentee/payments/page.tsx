@@ -1,85 +1,84 @@
 "use client";
-
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function MenteePayments() {
-  const [payments, setPayments] = useState<any[]>([]);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchPayments() {
-      try {
-        const res = await fetch("/api/mentee/payments");
-        if (res.ok) {
-          const data = await res.json();
-          setPayments(data);
-        }
-      } catch (error) {
-        console.error("Failed to load payments", error);
-      } finally {
+    fetch("/api/mentee/payments")
+      .then(res => res.json())
+      .then(d => {
+        setData(d);
         setLoading(false);
-      }
-    }
-    fetchPayments();
+      })
+      .catch(() => setLoading(false));
   }, []);
 
+  if (loading) return <div className="text-center py-5">Loading payments...</div>;
+  if (!data || data.error) return <div className="text-center py-5 text-danger">Failed to load payments.</div>;
+
+  const { payments, stats } = data;
+
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h3><i className="bi bi-credit-card"></i> My Payments</h3>
-          <p className="text-muted">View all your payment transactions and history.</p>
-        </div>
+    <div className="container-fluid mt-4">
+      <div className="mb-4">
+        <h3><i className="bi bi-credit-card"></i> My Payments</h3>
+        <p className="text-muted">View all your payment transactions and history.</p>
       </div>
 
       {/* Stats Cards */}
       <div className="row g-3 mb-4">
         <div className="col-md-3">
-          <div className="card bg-primary text-white shadow">
+          <div className="card text-white shadow-sm border-0" style={{ background: "#26867a" }}>
             <div className="card-body">
               <h6 className="card-title">Total Spent</h6>
-              <h2>K0.00</h2>
+              <h2 className="mb-0">K{stats.totalSpent.toFixed(2)}</h2>
+              <small>{payments.length} transactions</small>
             </div>
           </div>
         </div>
         <div className="col-md-3">
-          <div className="card bg-success text-white shadow">
+          <div className="card text-white shadow-sm border-0" style={{ background: "#3b9d53" }}>
             <div className="card-body">
               <h6 className="card-title">Completed</h6>
-              <h2>0</h2>
+              <h2 className="mb-0">{stats.completedCount}</h2>
+              <small>Released to mentors</small>
             </div>
           </div>
         </div>
         <div className="col-md-3">
-          <div className="card bg-warning text-dark shadow">
+          <div className="card text-dark shadow-sm border-0" style={{ background: "#ffc107" }}>
             <div className="card-body">
               <h6 className="card-title">Pending</h6>
-              <h2>0</h2>
+              <h2 className="mb-0">{stats.pendingCount}</h2>
+              <small>Awaiting confirmation</small>
             </div>
           </div>
         </div>
         <div className="col-md-3">
-          <div className="card bg-info text-white shadow">
+          <div className="card text-white shadow-sm border-0" style={{ background: "#1bc5e8" }}>
             <div className="card-body">
               <h6 className="card-title">Service Fees</h6>
-              <h2>K0.00</h2>
+              <h2 className="mb-0">K{stats.totalFees.toFixed(2)}</h2>
+              <small>5% of total payments</small>
             </div>
           </div>
         </div>
       </div>
 
       {/* Payments Table */}
-      <div className="card shadow">
-        <div className="card-header">
-          <h6 className="mb-0"><i className="bi bi-list-ul"></i> Payment History</h6>
+      <div className="card shadow-sm border-0">
+        <div className="card-header bg-white">
+          <h5 className="mb-0">Payment History</h5>
         </div>
         <div className="card-body p-0">
-          {loading ? (
-            <p className="text-center text-muted py-3">Loading payments...</p>
-          ) : payments.length === 0 ? (
-            <div className="text-center py-4">
+          {payments.length === 0 ? (
+            <div className="text-center py-5">
               <i className="bi bi-credit-card display-1 text-muted"></i>
               <p className="text-muted mt-3">No payment history found.</p>
+              <Link href="/mentee/search" className="btn btn-primary btn-sm">Find a Mentor</Link>
             </div>
           ) : (
             <div className="table-responsive">
@@ -96,15 +95,15 @@ export default function MenteePayments() {
                   </tr>
                 </thead>
                 <tbody>
-                  {payments.map((payment) => (
+                  {payments.map((payment: any) => (
                     <tr key={payment.id}>
-                      <td><span className="badge bg-light text-dark">{payment.transaction_reference?.slice(-8)}</span></td>
+                      <td><code>TXN-{payment.id}</code></td>
                       <td>{payment.mentor_name}</td>
                       <td>{payment.course_code}</td>
-                      <td>K{payment.amount}</td>
-                      <td>K{payment.admin_fee}</td>
+                      <td>K{Number(payment.amount).toFixed(2)}</td>
+                      <td>K{Number(payment.admin_fee).toFixed(2)}</td>
                       <td>
-                        <span className={`badge bg-${payment.payment_status === 'released' ? 'success' : 'warning'}`}>
+                        <span className={`badge bg-${payment.payment_status === 'released' ? 'success' : 'info'}`}>
                           {payment.payment_status}
                         </span>
                       </td>
