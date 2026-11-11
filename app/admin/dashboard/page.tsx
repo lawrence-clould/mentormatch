@@ -79,35 +79,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-
-      {/* Quick Actions */}
-      <div className="card shadow mb-4">
-        <div className="card-body">
-          <h6 className="card-title mb-3"><i className="bi bi-lightning-charge"></i> Quick Actions</h6>
-          <div className="row g-2 text-center">
-            <div className="col-md-3">
-              <Link href="/admin/users" className="btn btn-outline-primary w-100 py-3">
-                <i className="bi bi-people d-block fs-3 mb-2"></i> Manage Users
-              </Link>
-            </div>
-            <div className="col-md-3">
-              <Link href="/admin/applications" className="btn btn-outline-warning w-100 py-3">
-                <i className="bi bi-file-earmark-check d-block fs-3 mb-2"></i> Review Apps
-              </Link>
-            </div>
-            <div className="col-md-3">
-              <Link href="/admin/payments" className="btn btn-outline-success w-100 py-3">
-                <i className="bi bi-credit-card d-block fs-3 mb-2"></i> Payments
-              </Link>
-            </div>
-            <div className="col-md-3">
-              <Link href="/admin/certificates" className="btn btn-outline-info w-100 py-3">
-                <i className="bi bi-award d-block fs-3 mb-2"></i> Certificates
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
       
       {/* Recent Activity Placeholder */}
       <div className="row g-3">
