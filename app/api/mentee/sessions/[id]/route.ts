@@ -26,7 +26,7 @@ export async function GET(
   }
 }
 
-// NEW: Cancel the session (Soft Delete)
+// HARD DELETE: Permanently removes session and all related data
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -35,15 +35,18 @@ export async function DELETE(
     const { id } = await params;
     const pool = await getPool();
 
-    // Update status to cancelled
-    await pool.query(
-      "UPDATE sessions SET status = 'cancelled' WHERE id = $1",
-      [id]
-    );
+    // 1. Delete related feedback (if any)
+    await pool.query("DELETE FROM feedback WHERE session_id = $1", [id]);
 
-    return NextResponse.json({ ok: true, message: "Session cancelled" });
+    // 2. Delete related payments (if any)
+    await pool.query("DELETE FROM payments WHERE session_id = $1", [id]);
+
+    // 3. Finally, delete the session itself
+    await pool.query("DELETE FROM sessions WHERE id = $1", [id]);
+
+    return NextResponse.json({ ok: true, message: "Session and all related data deleted" });
   } catch (error: any) {
-    console.error("Cancel Error:", error.message);
+    console.error("Hard Delete Error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

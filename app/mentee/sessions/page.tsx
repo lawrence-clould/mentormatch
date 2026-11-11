@@ -43,8 +43,9 @@ export default function MenteeSessions() {
     }
   };
 
-  const handleCancel = async (id: number) => {
-    if (!confirm("Are you sure you want to cancel this session? This cannot be undone.")) return;
+  // CHANGED: Hard Delete Function
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to PERMANENTLY delete this session? All associated payments and feedback will also be deleted. This cannot be undone.")) return;
     
     try {
       const res = await fetch(`/api/mentee/sessions/${id}`, {
@@ -54,7 +55,8 @@ export default function MenteeSessions() {
       if (res.ok) {
         fetchSessions(); // Refresh the table
       } else {
-        alert("Failed to cancel session");
+        const data = await res.json();
+        alert(`Failed to delete: ${data.error}`);
       }
     } catch (err) {
       alert("An error occurred");
@@ -144,15 +146,13 @@ export default function MenteeSessions() {
                           <i className="bi bi-eye"></i> View
                         </Link>
 
-                        {/* Cancel Button added here */}
-                        {session.status !== "cancelled" && session.status !== "completed" && (
-                          <button 
-                            className="btn btn-sm btn-outline-danger ms-1" 
-                            onClick={() => handleCancel(session.id)}
-                          >
-                            <i className="bi bi-x-circle"></i> Cancel
-                          </button>
-                        )}
+                        {/* DELETE Button */}
+                        <button 
+                          className="btn btn-sm btn-outline-danger ms-1" 
+                          onClick={() => handleDelete(session.id)}
+                        >
+                          <i className="bi bi-trash"></i> Delete
+                        </button>
 
                         {session.payment_status === "pending" && (
                           <button 
