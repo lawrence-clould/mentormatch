@@ -7,11 +7,15 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { mentor_id, course_code, session_date, session_time, duration_minutes } = body;
     
-    // Hardcoded mentee ID (Faith) and semester ID
-    const menteeId = 6;
-    const semesterId = 1; 
+    // 1. Dynamically find the Mentee ID
+    const menteeRes: any = await pool.query("SELECT id FROM users WHERE role = 'mentee' LIMIT 1");
+    const menteeId = menteeRes.rows[0].id;
+    
+    // 2. Get the active semester ID
+    const semRes: any = await pool.query("SELECT id FROM semesters LIMIT 1");
+    const semesterId = semRes.rows.length > 0 ? semRes.rows[0].id : 1;
 
-    // 1. Get the mentor's rate
+    // 3. Get the mentor's rate
     const rateRes: any = await pool.query(
       "SELECT rate_per_hour FROM mentor_rates WHERE mentor_id = $1 AND course_code = $2",
       [mentor_id, course_code]
@@ -23,15 +27,15 @@ export async function POST(req: Request) {
 
     const rate = parseFloat(rateRes.rows[0].rate_per_hour);
     
-    // 2. Calculate fees
+    // 4. Calculate fees
     const totalAmount = (rate * duration_minutes) / 60;
     const adminFee = totalAmount * 0.05;
     const mentorPayout = totalAmount - adminFee;
 
-    // 3. Format the date/time properly for Postgres
+    // 5. Format date/time
     const dateTime = `${session_date}T${session_time}:00`;
 
-    // 4. Insert the session
+    // 6. Insert the session
     const insertRes: any = await pool.query(`
       INSERT INTO sessions 
       (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, mentor_rate, total_amount, admin_fee, mentor_payout, status, payment_status)
@@ -40,11 +44,9 @@ export async function POST(req: Request) {
       RETURNING id
     `, [menteeId, mentor_id, semesterId, course_code, dateTime, duration_minutes, rate, totalAmount, adminFee, mentorPayout]);
 
-    const sessionId = insertRes.rows[0].id;
-
     return NextResponse.json({ 
       ok: true, 
-      session_id: sessionId,
+      session_id: insertRes.rows[0].id,
       message: "Session booked successfully" 
     });
 

@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const pool = await getPool();
-    const mentorId = 4; // Dadray Mathotho
+    
+    // 1. Dynamically find the Mentor ID
+    const mentorRes: any = await pool.query("SELECT id FROM users WHERE role = 'mentor' LIMIT 1");
+    if (mentorRes.rows.length === 0) {
+      return NextResponse.json([]);
+    }
+    const mentorId = mentorRes.rows[0].id;
 
+    // 2. Fetch sessions for this mentor
     const res: any = await pool.query(`
       SELECT 
         s.*, 

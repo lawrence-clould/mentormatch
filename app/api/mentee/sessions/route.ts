@@ -5,10 +5,14 @@ export async function GET() {
   try {
     const pool = await getPool();
     
-    // Find the actual Mentee ID
-    const userRes: any = await pool.query("SELECT id FROM users WHERE role = 'mentee' LIMIT 1");
-    const menteeId = userRes.rows[0].id;
+    // 1. Dynamically find the Mentee ID (Faith Banda)
+    const menteeRes: any = await pool.query("SELECT id FROM users WHERE role = 'mentee' LIMIT 1");
+    if (menteeRes.rows.length === 0) {
+      return NextResponse.json([]);
+    }
+    const menteeId = menteeRes.rows[0].id;
 
+    // 2. Fetch sessions for this exact mentee
     const res: any = await pool.query(`
       SELECT 
         s.*, 
