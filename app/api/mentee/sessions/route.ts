@@ -4,7 +4,10 @@ import { getPool } from "@/lib/db";
 export async function GET() {
   try {
     const pool = await getPool();
-    const menteeId = 6; // Faith Banda
+    
+    // Find the actual Mentee ID
+    const userRes: any = await pool.query("SELECT id FROM users WHERE role = 'mentee' LIMIT 1");
+    const menteeId = userRes.rows[0].id;
 
     const res: any = await pool.query(`
       SELECT 
