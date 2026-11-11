@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { pool } from "@/lib/db";
+import { getPool } from "@/lib/db";
 
 export async function GET() {
   try {
+    const pool = await getPool();
+    
     const usersRes = await pool.query("SELECT COUNT(*) FROM users WHERE role != 'admin'");
     const mentorsRes = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'mentor'");
     const menteesRes = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'mentee'");
