@@ -16,8 +16,14 @@ export default function MenteeLayout({ children }: { children: ReactNode }) {
                 <Link href="/mentee/search" className="list-group-item list-group-item-action border-0">
                   <i className="bi bi-search me-2"></i> Find a Mentor
                 </Link>
+                <Link href="/mentee/courses" className="list-group-item list-group-item-action border-0">
+                  <i className="bi bi-book me-2"></i> My Courses
+                </Link>
                 <Link href="/mentee/sessions" className="list-group-item list-group-item-action border-0">
                   <i className="bi bi-calendar-check me-2"></i> My Sessions
+                </Link>
+                <Link href="/mentee/history" className="list-group-item list-group-item-action border-0">
+                  <i className="bi bi-clock-history me-2"></i> History
                 </Link>
                 <Link href="/mentee/payments" className="list-group-item list-group-item-action border-0">
                   <i className="bi bi-credit-card me-2"></i> Payments
