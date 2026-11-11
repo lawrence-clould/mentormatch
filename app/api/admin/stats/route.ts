@@ -5,12 +5,12 @@ export async function GET() {
   try {
     const pool = await getPool();
     
-    const usersRes = await pool.query("SELECT COUNT(*) FROM users WHERE role != 'admin'");
-    const mentorsRes = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'mentor'");
-    const menteesRes = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'mentee'");
-    const sessionsRes = await pool.query("SELECT COUNT(*) FROM sessions");
-    const completedRes = await pool.query("SELECT COUNT(*) FROM sessions WHERE status = 'completed'");
-    const revenueRes = await pool.query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sessions WHERE payment_status = 'released_to_mentor'");
+    const usersRes: any = await pool.query("SELECT COUNT(*) FROM users WHERE role != 'admin'");
+    const mentorsRes: any = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'mentor'");
+    const menteesRes: any = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'mentee'");
+    const sessionsRes: any = await pool.query("SELECT COUNT(*) FROM sessions");
+    const completedRes: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE status = 'completed'");
+    const revenueRes: any = await pool.query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sessions WHERE payment_status = 'released_to_mentor'");
 
     return NextResponse.json({
       totalUsers: parseInt(usersRes.rows[0].count),
