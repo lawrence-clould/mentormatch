@@ -8,24 +8,46 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const res = await fetch("/api/admin/users");
-        if (res.ok) {
-          const data = await res.json();
-          setUsers(data);
-        } else {
-          setError("Failed to load users.");
-        }
-      } catch (err) {
-        setError("An error occurred.");
-      } finally {
-        setLoading(false);
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("/api/admin/users");
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
+      } else {
+        setError("Failed to load users.");
       }
+    } catch (err) {
+      setError("An error occurred.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, []);
+
+  const handleApprove = async (userId: number) => {
+    if (!confirm("Are you sure you want to approve this user?")) return;
+
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: userId, status: "active" }),
+      });
+
+      if (res.ok) {
+        fetchUsers(); // Refresh the list
+      } else {
+        alert("Failed to approve user.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred.");
+    }
+  };
 
   if (loading) return <div className="container mt-5 text-center"><h3>Loading users...</h3></div>;
   if (error) return <div className="container mt-5 text-center text-danger"><h3>{error}</h3></div>;
@@ -132,6 +154,17 @@ export default function AdminUsers() {
                 </div>
                 <div className="card-footer bg-transparent border-top-0 d-flex justify-content-between">
                   <button className="btn btn-sm btn-outline-primary w-100 me-1">View</button>
+                  
+                  {/* Added Approve Button */}
+                  {user.status === "pending" && (
+                    <button 
+                      className="btn btn-sm btn-success w-100 mx-1" 
+                      onClick={() => handleApprove(user.id)}
+                    >
+                      Approve
+                    </button>
+                  )}
+
                   <button className="btn btn-sm btn-outline-danger w-100 ms-1">Delete</button>
                 </div>
               </div>
