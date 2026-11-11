@@ -1,10 +1,10 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
-export default function MenteeBook() {
+function BookForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const mentorId = searchParams.get("mentor_id");
@@ -52,8 +52,7 @@ export default function MenteeBook() {
       setError("Please select course, date, and time.");
       return;
     }
-    // In a real app, this would POST to /api/mentee/sessions
-    alert(`Booking placed successfully for ${selectedDate} at ${selectedTime}!`);
+    alert(`Booking placed for ${selectedDate} at ${selectedTime}!`);
     router.push("/mentee/sessions");
   };
 
@@ -65,7 +64,7 @@ export default function MenteeBook() {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <h4><i className="bi bi-calendar-plus"></i> Book a Session</h4>
-          <p className="text-muted">Book as many sessions as you need. Choose a time inside your mentor's weekly availability.</p>
+          <p className="text-muted">Choose a time inside your mentor's weekly availability.</p>
         </div>
         <Link href="/mentee/search" className="btn btn-outline-secondary btn-sm">
           <i className="bi bi-arrow-left"></i> Back to Search
@@ -75,7 +74,6 @@ export default function MenteeBook() {
       {error && <div className="alert alert-danger">{error}</div>}
 
       <div className="row g-3">
-        {/* Mentor Profile */}
         <div className="col-lg-5">
           <div className="card shadow-sm">
             <div className="card-header text-white" style={{ background: "linear-gradient(135deg, #0d6efd, #0a58ca)" }}>
@@ -121,15 +119,12 @@ export default function MenteeBook() {
           </div>
         </div>
 
-        {/* Booking Form */}
         <div className="col-lg-7">
           <div className="card shadow-sm">
             <div className="card-header bg-light">
               <h6 className="mb-0"><i className="bi bi-calendar"></i> Schedule Your Session</h6>
             </div>
             <div className="card-body">
-              
-              {/* Step 1: Course */}
               <div className="mb-3">
                 <label className="form-label fw-bold">1. Select Course *</label>
                 <div>
@@ -142,7 +137,6 @@ export default function MenteeBook() {
                 </div>
               </div>
 
-              {/* Step 2: Date */}
               <div className="mb-3">
                 <label className="form-label fw-bold">2. Select Date *</label>
                 <div className="d-flex gap-2 overflow-auto pb-2">
@@ -164,7 +158,6 @@ export default function MenteeBook() {
                 </div>
               </div>
 
-              {/* Step 3: Time */}
               <div className="mb-3">
                 <label className="form-label fw-bold">3. Select Time *</label>
                 <div className="row g-2">
@@ -181,7 +174,6 @@ export default function MenteeBook() {
                 </div>
               </div>
 
-              {/* Step 4: Duration */}
               <div className="mb-3">
                 <label className="form-label fw-bold">4. Duration</label>
                 <div className="d-flex gap-2">
@@ -197,7 +189,6 @@ export default function MenteeBook() {
                 </div>
               </div>
 
-              {/* Payment Summary */}
               <div className="bg-light rounded p-3 mb-3">
                 <h6 className="mb-2"><i className="bi bi-calculator"></i> Payment Summary</h6>
                 <div className="d-flex justify-content-between mb-1">
@@ -230,5 +221,13 @@ export default function MenteeBook() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MenteeBook() {
+  return (
+    <Suspense fallback={<div className="text-center py-5">Loading...</div>}>
+      <BookForm />
+    </Suspense>
   );
 }
