@@ -20,17 +20,17 @@ export default function AdminSettings() {
               <form>
                 <div className="mb-3">
                   <label className="form-label">Current Password *</label>
-                  <input type="password" className="form-control" placeholder="Enter current password" />
+                  <input type="password" className="form-control" />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">New Password *</label>
-                  <input type="password" className="form-control" placeholder="Enter new password (min 6 characters)" />
+                  <input type="password" className="form-control" />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Confirm New Password *</label>
-                  <input type="password" className="form-control" placeholder="Re-enter new password" />
+                  <input type="password" className="form-control" />
                 </div>
-                <div className="security-tips mb-3 bg-light p-3 rounded">
+                <div className="bg-light p-3 rounded mb-3">
                   <strong><i className="bi bi-shield-check"></i> Security Tips:</strong>
                   <ul className="mb-0 small text-muted">
                     <li>Use a strong password with a mix of letters, numbers, and symbols</li>

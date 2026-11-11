@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function AdminApplications() {
   return (
@@ -20,10 +20,9 @@ export default function AdminApplications() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
       <div className="row g-3 mb-4">
         <div className="col-md-3 col-6">
-          <div className="card stat-card bg-warning text-dark shadow">
+          <div className="card bg-warning text-dark shadow">
             <div className="card-body">
               <h6 className="card-title">Pending Applications</h6>
               <h2 className="mb-0">0</h2>
@@ -32,7 +31,7 @@ export default function AdminApplications() {
           </div>
         </div>
         <div className="col-md-3 col-6">
-          <div className="card stat-card bg-success text-white shadow">
+          <div className="card bg-success text-white shadow">
             <div className="card-body">
               <h6 className="card-title">Active Users</h6>
               <h2 className="mb-0">0</h2>
@@ -41,7 +40,7 @@ export default function AdminApplications() {
           </div>
         </div>
         <div className="col-md-3 col-6">
-          <div className="card stat-card bg-primary text-white shadow">
+          <div className="card bg-primary text-white shadow">
             <div className="card-body">
               <h6 className="card-title">Total Approved</h6>
               <h2 className="mb-0">0</h2>
@@ -50,7 +49,7 @@ export default function AdminApplications() {
           </div>
         </div>
         <div className="col-md-3 col-6">
-          <div className="card stat-card bg-info text-white shadow">
+          <div className="card bg-info text-white shadow">
             <div className="card-body">
               <h6 className="card-title">Active Semester</h6>
               <h2 className="mb-0">None</h2>
@@ -60,7 +59,6 @@ export default function AdminApplications() {
         </div>
       </div>
 
-      {/* Tabs */}
       <ul className="nav nav-tabs mb-4" role="tablist">
         <li className="nav-item" role="presentation">
           <button className="nav-link active" data-bs-toggle="tab" data-bs-target="#mentors" type="button" role="tab">
@@ -84,11 +82,9 @@ export default function AdminApplications() {
             <div className="card-body text-center py-5">
               <i className="bi bi-check-circle display-1 text-success"></i>
               <p className="text-muted mt-3">No pending mentor applications.</p>
-              <p className="text-muted small">All mentor applications have been reviewed.</p>
             </div>
           </div>
         </div>
-        
         <div className="tab-pane fade" id="mentees" role="tabpanel">
           <div className="card shadow">
             <div className="card-header d-flex justify-content-between align-items-center">
@@ -98,7 +94,6 @@ export default function AdminApplications() {
             <div className="card-body text-center py-5">
               <i className="bi bi-check-circle display-1 text-success"></i>
               <p className="text-muted mt-3">No pending mentee enrollments.</p>
-              <p className="text-muted small">All mentee enrollments have been reviewed.</p>
             </div>
           </div>
         </div>

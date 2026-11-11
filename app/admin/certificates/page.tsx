@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 export default function AdminCertificates() {
   return (
     <div>
@@ -12,7 +10,6 @@ export default function AdminCertificates() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
       <div className="row g-3 mb-4">
         <div className="col-md-3 col-6">
           <div className="card bg-primary text-white shadow">
@@ -52,7 +49,6 @@ export default function AdminCertificates() {
         </div>
       </div>
 
-      {/* All Certificates Table */}
       <div className="card shadow">
         <div className="card-header d-flex justify-content-between align-items-center">
           <h6 className="mb-0"><i className="bi bi-list-ul"></i> All Certificates</h6>
@@ -70,12 +66,11 @@ export default function AdminCertificates() {
                   <th>Sessions</th>
                   <th>Issued</th>
                   <th>Status</th>
-                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td colSpan={8} className="text-center py-4 text-muted">
+                  <td colSpan={7} className="text-center py-4 text-muted">
                     <i className="bi bi-award display-1 text-muted d-block mb-2"></i>
                     No certificates issued yet.
                   </td>

@@ -1,26 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 export default function AdminPayments() {
-  const [payments, setPayments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // In a real app, this would fetch from your PostgreSQL payments table.
-    // For now, we simulate the UI loading.
-    setTimeout(() => {
-      setPayments([]); // Empty for now, will show the "No payments" message
-      setLoading(false);
-    }, 500);
-  }, []);
-
   return (
     <div>
       <h3><i className="bi bi-credit-card"></i> Payments</h3>
       <p className="text-muted">View and manage all payment transactions.</p>
 
-      {/* Summary Cards */}
       <div className="row g-3 mb-4">
         <div className="col-md-3">
           <div className="card bg-primary text-white shadow">
@@ -56,7 +41,6 @@ export default function AdminPayments() {
         </div>
       </div>
 
-      {/* Filter */}
       <div className="card shadow mb-4">
         <div className="card-body">
           <form className="row g-3">
@@ -73,7 +57,6 @@ export default function AdminPayments() {
         </div>
       </div>
 
-      {/* Payments Table */}
       <div className="card shadow">
         <div className="card-body">
           <div className="table-responsive">
@@ -92,27 +75,11 @@ export default function AdminPayments() {
                 </tr>
               </thead>
               <tbody>
-                {payments.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="text-center text-muted py-4">
-                      No payments found.
-                    </td>
-                  </tr>
-                ) : (
-                  payments.map((p) => (
-                    <tr key={p.id}>
-                      <td><code>{p.reference}</code></td>
-                      <td>{p.mentee_name}</td>
-                      <td>{p.mentor_name}</td>
-                      <td>{p.course_code}</td>
-                      <td>K{p.amount}</td>
-                      <td>K{p.admin_fee}</td>
-                      <td>K{p.mentor_payout}</td>
-                      <td><span className="badge bg-success">{p.status}</span></td>
-                      <td>{p.date}</td>
-                    </tr>
-                  ))
-                )}
+                <tr>
+                  <td colSpan={9} className="text-center text-muted py-4">
+                    No payments found.
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
