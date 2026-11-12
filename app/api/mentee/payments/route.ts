@@ -6,9 +6,14 @@ export async function GET() {
   try {
     const session = await getSession();
     const user = session.user;
-    if (!user) return NextResponse.json({ payments: [], stats: { totalSpent: 0, totalFees: 0, completedCount: 0, pendingCount: 0 } });
+    if (!user) {
+      return NextResponse.json({ 
+        payments: [], 
+        stats: { totalSpent: 0, totalFees: 0, completedCount: 0, pendingCount: 0 } 
+      });
+    }
 
-    const userId = Number(user.id); // <--- Convert to number!
+    const userId = Number(user.id); // Convert string '8' to number 8
     const pool = await getPool();
 
     const res: any = await pool.query(`

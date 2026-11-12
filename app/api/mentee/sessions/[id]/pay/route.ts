@@ -8,16 +8,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const user = session.user;
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const userId = Number(user.id); // <--- Convert to number!
+    const userId = Number(user.id); // Convert string '8' to number 8
     const { id } = await params;
     const pool = await getPool();
 
-    const sessionRes: any = await pool.query("SELECT * FROM sessions WHERE id = $1 AND mentee_id = $2", [id, userId]);
-    if (sessionRes.rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const sessionRes: any = await pool.query(
+      "SELECT * FROM sessions WHERE id = $1 AND mentee_id = $2",
+      [id, userId]
+    );
+    
+    if (sessionRes.rows.length === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     
     const sessionData = sessionRes.rows[0];
 
-    await pool.query("UPDATE sessions SET payment_status = 'paid_to_admin' WHERE id = $1", [id]);
+    await pool.query(
+      "UPDATE sessions SET payment_status = 'paid_to_admin' WHERE id = $1",
+      [id]
+    );
+    
     await pool.query(`
       INSERT INTO payments (session_id, mentee_id, mentor_id, amount, admin_fee, mentor_payout, payment_status)
       VALUES ($1, $2, $3, $4, $5, $6, 'captured')
