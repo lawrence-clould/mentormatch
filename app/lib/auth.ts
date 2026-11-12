@@ -18,7 +18,6 @@ export async function authenticateUser(email: string, password: string) {
     throw new AuthenticationError("Invalid email or password");
   }
 
-  // Compare the provided password with the hashed password in the DB
   const isValid = await bcrypt.compare(password, user.password);
   
   if (!isValid) {
@@ -28,7 +27,6 @@ export async function authenticateUser(email: string, password: string) {
   return user;
 }
 
-// FIXED: Use the existing getSession function instead of sessionOptions
 export async function signOut() {
   const { getSession } = await import("./session");
   const session = await getSession();
