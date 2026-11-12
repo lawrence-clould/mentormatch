@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const user = session.user;
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const userId = Number(user.id); // Convert string '8' to number 8
+    const userId = Number(user.id);
     const pool = await getPool();
     const body = await req.json();
     const { mentor_id, course_code, session_date, session_time, duration_minutes } = body;

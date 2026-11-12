@@ -6,13 +6,10 @@ export async function GET() {
   try {
     const session = await getSession();
     const user = session.user;
+    if (!user) return NextResponse.json([]);
 
-    if (!user) {
-      return NextResponse.json([]);
-    }
-
-    const userId = Number(user.id); // Convert string '8' to number 8
     const pool = await getPool();
+    const userId = Number(user.id); // Fixes the string vs integer issue
 
     const res: any = await pool.query(`
       SELECT s.*, u.name as mentor_name, u.email as mentor_email

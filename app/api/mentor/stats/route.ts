@@ -9,12 +9,14 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const pool = await getPool();
-    const total: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1", [user.id]);
-    const completed: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1 AND status = 'completed'", [user.id]);
-    const pending: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1 AND status IN ('pending','confirmed')", [user.id]);
-    const earnings: any = await pool.query("SELECT COALESCE(SUM(mentor_payout),0) as total FROM sessions WHERE mentor_id = $1 AND payment_status = 'released_to_mentor'", [user.id]);
-    const hours: any = await pool.query("SELECT COALESCE(SUM(duration_minutes),0)/60.0 as total FROM sessions WHERE mentor_id = $1 AND status = 'completed'", [user.id]);
-    const rates: any = await pool.query("SELECT COUNT(*) FROM mentor_rates WHERE mentor_id = $1", [user.id]);
+    const mentorId = Number(user.id);
+
+    const total: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1", [mentorId]);
+    const completed: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1 AND status = 'completed'", [mentorId]);
+    const pending: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1 AND status IN ('pending','confirmed')", [mentorId]);
+    const earnings: any = await pool.query("SELECT COALESCE(SUM(mentor_payout),0) as total FROM sessions WHERE mentor_id = $1 AND payment_status = 'released_to_mentor'", [mentorId]);
+    const hours: any = await pool.query("SELECT COALESCE(SUM(duration_minutes),0)/60.0 as total FROM sessions WHERE mentor_id = $1 AND status = 'completed'", [mentorId]);
+    const rates: any = await pool.query("SELECT COUNT(*) FROM mentor_rates WHERE mentor_id = $1", [mentorId]);
     
     return NextResponse.json({
       total: parseInt(total.rows[0].count),
