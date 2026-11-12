@@ -14,7 +14,6 @@ export async function POST(
     const pool = await getPool();
 
     const sessionRes: any = await pool.query("SELECT * FROM sessions WHERE id = $1 AND mentee_id = $2", [id, user.id]);
-    
     if (sessionRes.rows.length === 0) {
       return NextResponse.json({ error: "Session not found or unauthorized" }, { status: 404 });
     }
@@ -31,7 +30,7 @@ export async function POST(
       VALUES ($1, $2, $3, $4, $5, $6, 'captured', 'TXN-' || floor(random() * 1000000))
     `, [id, user.id, session.mentor_id, session.total_amount, session.admin_fee, session.mentor_payout]);
 
-    return NextResponse.json({ ok: true, message: "Payment successful" });
+    return NextResponse.json({ ok: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
