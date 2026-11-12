@@ -21,17 +21,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     
     const sessionData = sessionRes.rows[0];
 
+    // Step 3: Update session status to 'paid_to_admin' (Escrow)
     await pool.query(
-      "UPDATE sessions SET payment_status = 'paid_to_admin' WHERE id = $1",
+      "UPDATE sessions SET payment_status = 'paid_to_admin', status = 'confirmed' WHERE id = $1",
       [id]
     );
     
+    // Create the payment record
     await pool.query(`
-      INSERT INTO payments (session_id, mentee_id, mentor_id, amount, admin_fee, mentor_payout, payment_status)
-      VALUES ($1, $2, $3, $4, $5, $6, 'captured')
+      INSERT INTO payments (session_id, mentee_id, mentor_id, amount, admin_fee, mentor_payout, payment_status, transaction_reference)
+      VALUES ($1, $2, $3, $4, $5, $6, 'captured', 'TXN-' || floor(random() * 1000000))
     `, [id, userId, sessionData.mentor_id, sessionData.total_amount, sessionData.admin_fee, sessionData.mentor_payout]);
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, message: "Payment successful, session confirmed" });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

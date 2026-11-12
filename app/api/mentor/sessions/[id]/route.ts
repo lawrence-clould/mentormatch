@@ -1,33 +1,32 @@
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { getSession } from "@/lib/session";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-  const pool = await getPool();
-  const res: any = await pool.query(
-    `SELECT s.*, u.name as mentee_name, u.email as mentee_email, u.phone as mentee_phone
-     FROM sessions s JOIN users u ON s.mentee_id = u.id
-     WHERE s.id = $1`,
-    [id]
-  );
-  if (res.rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(res.rows[0]);
-}
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getSession();
+    const user = session.user;
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-  const { action } = await req.json();
-  const pool = await getPool();
+    const mentorId = parseInt(user.id as any, 10);
+    const { id } = await params;
+    const body = await req.json();
+    const { action, meeting_link } = body;
 
-  const next = action === "confirm" ? "confirmed" : action === "complete" ? "completed" : action === "cancel" ? "cancelled" : null;
-  if (!next) return NextResponse.json({ error: "Bad action" }, { status: 400 });
+    const pool = await getPool();
 
-  await pool.query("UPDATE sessions SET status = $1 WHERE id = $2", [next, id]);
-  return NextResponse.json({ ok: true, status: next });
+    // Step 4: Add Meeting Link
+    if (meeting_link) {
+      await pool.query("UPDATE sessions SET meeting_link = $1 WHERE id = $2 AND mentor_id = $3", [meeting_link, id, mentorId]);
+    }
+
+    // Step 5: Mark as Completed
+    if (action === "complete") {
+      await pool.query("UPDATE sessions SET status = 'completed' WHERE id = $1 AND mentor_id = $2", [id, mentorId]);
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

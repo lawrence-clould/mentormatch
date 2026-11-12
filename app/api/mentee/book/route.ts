@@ -14,8 +14,12 @@ export async function POST(req: Request) {
     
     const userId = parseInt(user.id as any, 10);
     
-    // HARDCODED to semester 3 (we know this is the correct ID from the database test)
-    const semesterId = 3;
+    // Fetch the active semester ID
+    const semRes: any = await pool.query("SELECT id FROM semesters ORDER BY id DESC LIMIT 1");
+    if (semRes.rows.length === 0) {
+      return NextResponse.json({ error: "No semester found" }, { status: 400 });
+    }
+    const semesterId = semRes.rows[0].id;
 
     // Get the mentor's rate
     const rateRes: any = await pool.query(
@@ -30,7 +34,7 @@ export async function POST(req: Request) {
     const mentorPayout = totalAmount - adminFee;
     const dateTime = `${session_date}T${session_time}:00`;
 
-    // Insert the session with the correct semester ID
+    // Create the session (payment_status = pending until they pay)
     const insertRes: any = await pool.query(`
       INSERT INTO sessions 
       (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, mentor_rate, total_amount, admin_fee, mentor_payout, status, payment_status)
