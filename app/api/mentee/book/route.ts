@@ -6,12 +6,9 @@ export async function POST(req: Request) {
   try {
     const session = await getSession();
     const user = session.user;
-    
-    // DEBUG: Log the user ID
-    console.log("BOOKING API - Logged in user:", user);
-
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const userId = Number(user.id); // <--- Convert to number!
     const pool = await getPool();
     const body = await req.json();
     const { mentor_id, course_code, session_date, session_time, duration_minutes } = body;
@@ -31,18 +28,14 @@ export async function POST(req: Request) {
     const mentorPayout = totalAmount - adminFee;
     const dateTime = `${session_date}T${session_time}:00`;
 
-    // Insert and return the inserted row to verify
     const insertRes: any = await pool.query(`
       INSERT INTO sessions 
       (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, mentor_rate, total_amount, admin_fee, mentor_payout, status, payment_status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', 'pending') RETURNING *
-    `, [user.id, mentor_id, semesterId, course_code, dateTime, duration_minutes, rate, totalAmount, adminFee, mentorPayout]);
-
-    console.log("BOOKING API - Inserted session:", insertRes.rows[0]);
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', 'pending') RETURNING id
+    `, [userId, mentor_id, semesterId, course_code, dateTime, duration_minutes, rate, totalAmount, adminFee, mentorPayout]);
 
     return NextResponse.json({ ok: true, session_id: insertRes.rows[0].id });
   } catch (error: any) {
-    console.error("BOOKING API Error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
