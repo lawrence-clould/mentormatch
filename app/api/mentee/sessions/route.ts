@@ -9,10 +9,15 @@ export async function GET() {
     if (!user) return NextResponse.json([]);
 
     const pool = await getPool();
-    const userId = Number(user.id); // Fixes the string vs integer issue
+    
+    // CRITICAL: Force the ID to be an integer (8, not '8')
+    const userId = parseInt(user.id as any, 10);
 
     const res: any = await pool.query(`
-      SELECT s.*, u.name as mentor_name, u.email as mentor_email
+      SELECT 
+        s.*, 
+        u.name as mentor_name, 
+        u.email as mentor_email
       FROM sessions s
       JOIN users u ON s.mentor_id = u.id
       WHERE s.mentee_id = $1
@@ -21,6 +26,7 @@ export async function GET() {
 
     return NextResponse.json(res.rows);
   } catch (error: any) {
+    console.error("Sessions API Error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -8,11 +8,14 @@ export async function POST(req: Request) {
     const user = session.user;
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const userId = Number(user.id);
     const pool = await getPool();
     const body = await req.json();
     const { mentor_id, course_code, session_date, session_time, duration_minutes } = body;
     
+    // CRITICAL: Force the ID to be an integer
+    const userId = parseInt(user.id as any, 10);
+    
+    // Find the active semester
     const semRes: any = await pool.query("SELECT id FROM semesters LIMIT 1");
     const semesterId = semRes.rows.length > 0 ? semRes.rows[0].id : 1;
 
@@ -31,11 +34,13 @@ export async function POST(req: Request) {
     const insertRes: any = await pool.query(`
       INSERT INTO sessions 
       (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, mentor_rate, total_amount, admin_fee, mentor_payout, status, payment_status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', 'pending') RETURNING id
+      VALUES 
+      ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', 'pending') RETURNING id
     `, [userId, mentor_id, semesterId, course_code, dateTime, duration_minutes, rate, totalAmount, adminFee, mentorPayout]);
 
     return NextResponse.json({ ok: true, session_id: insertRes.rows[0].id });
   } catch (error: any) {
+    console.error("Booking Error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
