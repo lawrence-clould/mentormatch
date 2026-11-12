@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { getSessionUser } from "@/lib/getSessionUser";
+import { getSession } from "@/lib/session";
 
 export async function GET() {
   try {
-    const user = await getSessionUser();
+    const session = await getSession();
+    const user = session.user;
     if (!user) return NextResponse.json([]);
 
     const pool = await getPool();

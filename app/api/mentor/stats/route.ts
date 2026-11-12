@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { getSessionUser } from "@/lib/getSessionUser";
+import { getSession } from "@/lib/session";
 
 export async function GET() {
   try {
-    const user = await getSessionUser();
+    const session = await getSession();
+    const user = session.user;
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const pool = await getPool();
-    
     const total: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1", [user.id]);
     const completed: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1 AND status = 'completed'", [user.id]);
     const pending: any = await pool.query("SELECT COUNT(*) FROM sessions WHERE mentor_id = $1 AND status IN ('pending','confirmed')", [user.id]);
