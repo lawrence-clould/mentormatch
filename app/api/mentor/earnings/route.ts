@@ -58,4 +58,4 @@ export async function GET() {
     console.error("Earnings API Error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}s
+}

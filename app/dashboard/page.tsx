@@ -13,14 +13,12 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // If active, send them to their correct dashboard
   if (user.status === "active") {
     if (user.role === "mentor") redirect("/mentor/dashboard");
     if (user.role === "mentee") redirect("/mentee/dashboard");
     if (user.role === "admin") redirect("/admin/dashboard");
   }
 
-  // If pending, show waiting screen
   return (
     <main className="container py-5">
       <section className="card mx-auto p-4 shadow-sm border-0" style={{ maxWidth: 680 }}>

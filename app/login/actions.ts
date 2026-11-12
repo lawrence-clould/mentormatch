@@ -17,7 +17,6 @@ export async function loginAction(formData: FormData): Promise<void> {
   try {
     const user = await authenticateUser(email, password);
     
-    // Create the session and save the ID!
     const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
     session.user = {
       id: user.id,
