@@ -28,11 +28,9 @@ export async function authenticateUser(email: string, password: string) {
   return user;
 }
 
+// FIXED: Use the existing getSession function instead of sessionOptions
 export async function signOut() {
-  const { getIronSession } = await import("iron-session");
-  const { cookies } = await import("next/headers");
-  const { sessionOptions } = await import("./session");
-  
-  const session = await getIronSession(await cookies(), sessionOptions);
+  const { getSession } = await import("./session");
+  const session = await getSession();
   session.destroy();
 }

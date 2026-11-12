@@ -2,9 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { AuthenticationError, authenticateUser } from "@/lib/auth";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
-import { sessionOptions, SessionData } from "@/lib/session";
+import { getSession } from "@/lib/session";
 
 export async function loginAction(formData: FormData): Promise<void> {
   const email = String(formData.get("email") ?? "").trim();
@@ -17,7 +15,7 @@ export async function loginAction(formData: FormData): Promise<void> {
   try {
     const user = await authenticateUser(email, password);
     
-    const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+    const session = await getSession();
     session.user = {
       id: user.id,
       name: user.name,

@@ -1,19 +1,10 @@
-import { SessionOptions } from "iron-session";
+import { getIronSession } from "iron-session";
+import { cookies } from "next/headers";
 
 export interface SessionData {
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    status: string;
-  };
+  user?: { ... };
 }
 
-export const sessionOptions: SessionOptions = {
-  password: process.env.SESSION_SECRET || "complex_password_at_least_32_characters_long",
-  cookieName: "mentormatch_session",
-  cookieOptions: {
-    secure: process.env.NODE_ENV === "production",
-  },
-};
+export async function getSession() {
+  return getIronSession<SessionData>(await cookies(), { ... });
+}

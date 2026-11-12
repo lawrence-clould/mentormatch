@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logoutAction } from "@/app/login/actions";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
-import { sessionOptions, SessionData } from "@/lib/session";
+import { getSession } from "@/lib/session";
 
 export default async function DashboardPage() {
-  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+  const session = await getSession();
   const user = session.user;
   
   if (!user) {
