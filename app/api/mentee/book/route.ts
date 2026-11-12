@@ -14,19 +14,18 @@ export async function POST(req: Request) {
     
     const userId = parseInt(user.id as any, 10);
     
-    // 1. DYNAMICALLY get the active semester
+    // CRITICAL: Fetch the correct semester ID dynamically
     const semRes: any = await pool.query("SELECT id FROM semesters ORDER BY id DESC LIMIT 1");
     if (semRes.rows.length === 0) {
-      return NextResponse.json({ error: "No semester found in database" }, { status: 400 });
+      return NextResponse.json({ error: "No semester found in database. Please contact admin." }, { status: 400 });
     }
     const semesterId = semRes.rows[0].id;
 
-    // 2. Get the mentor's rate
     const rateRes: any = await pool.query(
       "SELECT rate_per_hour FROM mentor_rates WHERE mentor_id = $1 AND course_code = $2",
       [mentor_id, course_code]
     );
-    if (rateRes.rows.length === 0) return NextResponse.json({ error: "Rate not found" }, { status: 400 });
+    if (rateRes.rows.length === 0) return NextResponse.json({ error: "Rate not found for this course" }, { status: 400 });
 
     const rate = parseFloat(rateRes.rows[0].rate_per_hour);
     const totalAmount = (rate * duration_minutes) / 60;
@@ -34,7 +33,7 @@ export async function POST(req: Request) {
     const mentorPayout = totalAmount - adminFee;
     const dateTime = `${session_date}T${session_time}:00`;
 
-    // 3. Insert the session with the CORRECT semesterId
+    // Insert with the correct semesterId
     const insertRes: any = await pool.query(`
       INSERT INTO sessions 
       (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, mentor_rate, total_amount, admin_fee, mentor_payout, status, payment_status)

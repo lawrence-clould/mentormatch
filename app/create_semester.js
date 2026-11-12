@@ -5,13 +5,10 @@ const client = new Client({
 });
 
 client.connect().then(async () => {
-  // Check if a semester exists
   const existing = await client.query("SELECT id FROM semesters LIMIT 1");
-  
   if (existing.rows.length > 0) {
-    console.log("✅ Semester already exists with ID:", existing.rows[0].id);
+    console.log("✅ Semester exists with ID:", existing.rows[0].id);
   } else {
-    // Create a new semester
     const result = await client.query(`
       INSERT INTO semesters (semester_name, status, start_date, end_date)
       VALUES ('Semester 1', 'active', NOW(), NOW() + INTERVAL '6 months')
@@ -19,6 +16,5 @@ client.connect().then(async () => {
     `);
     console.log("✅ Created new semester with ID:", result.rows[0].id);
   }
-  
   await client.end();
 }).catch(err => { console.error(err); process.exit(1); });
