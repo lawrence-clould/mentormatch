@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { getSessionUser } from "@/lib/getSessionUser";
 
 export async function GET() {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json([]); // Return empty if not logged in
+    }
+
     const pool = await getPool();
     
-    // 1. Dynamically find the Mentee ID (Faith Banda)
-    const menteeRes: any = await pool.query("SELECT id FROM users WHERE role = 'mentee' LIMIT 1");
-    if (menteeRes.rows.length === 0) {
-      return NextResponse.json([]);
-    }
-    const menteeId = menteeRes.rows[0].id;
-
-    // 2. Fetch sessions for this exact mentee
+    // Fetch sessions specifically for the logged-in user
     const res: any = await pool.query(`
       SELECT 
         s.*, 
@@ -22,7 +21,7 @@ export async function GET() {
       JOIN users u ON s.mentor_id = u.id
       WHERE s.mentee_id = $1
       ORDER BY s.session_date DESC
-    `, [menteeId]);
+    `, [user.id]);
 
     return NextResponse.json(res.rows);
   } catch (error: any) {
