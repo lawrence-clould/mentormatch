@@ -21,7 +21,6 @@ export async function GET() {
 
     return NextResponse.json(res.rows);
   } catch (error: any) {
-    console.error("Sessions API Error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
