@@ -9,6 +9,7 @@ export async function GET() {
     if (!user) return NextResponse.json([]);
 
     const pool = await getPool();
+    // Force the ID to be an integer
     const mentorId = parseInt(user.id as any, 10);
 
     const res: any = await pool.query(`
