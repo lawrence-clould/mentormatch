@@ -15,6 +15,7 @@ export async function loginAction(formData: FormData): Promise<void> {
   try {
     const user = await authenticateUser(email, password);
     
+    // Create session and save the real ID
     const session = await getSession();
     session.user = {
       id: user.id,

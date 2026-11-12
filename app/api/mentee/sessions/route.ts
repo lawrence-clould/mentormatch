@@ -9,8 +9,6 @@ export async function GET() {
     if (!user) return NextResponse.json([]);
 
     const pool = await getPool();
-    
-    // Fetch only the sessions belonging to the REAL logged-in user
     const res: any = await pool.query(`
       SELECT s.*, u.name as mentor_name, u.email as mentor_email
       FROM sessions s

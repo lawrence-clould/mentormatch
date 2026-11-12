@@ -4,7 +4,6 @@ import { getSession } from "@/lib/session";
 
 export async function POST(req: Request) {
   try {
-    // 1. Get the REAL logged-in user
     const session = await getSession();
     const user = session.user;
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,7 +27,6 @@ export async function POST(req: Request) {
     const mentorPayout = totalAmount - adminFee;
     const dateTime = `${session_date}T${session_time}:00`;
 
-    // 2. Insert using the REAL user.id
     const insertRes: any = await pool.query(`
       INSERT INTO sessions 
       (mentee_id, mentor_id, semester_id, course_code, session_date, duration_minutes, mentor_rate, total_amount, admin_fee, mentor_payout, status, payment_status)
