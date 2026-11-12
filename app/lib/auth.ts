@@ -12,7 +12,7 @@ export async function authenticateUser(email: string, password: string) {
   const pool = await getPool();
   
   const res = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-  const user: any = res.rows[0]; // <--- Added : any here
+  const user: any = res.rows[0]; // <--- Type fix here
 
   if (!user) {
     throw new AuthenticationError("Invalid email or password");
