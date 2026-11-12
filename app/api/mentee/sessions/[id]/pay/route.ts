@@ -8,7 +8,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const user = session.user;
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const userId = Number(user.id); // Convert string '8' to number 8
+    const userId = parseInt(user.id as any, 10);
     const { id } = await params;
     const pool = await getPool();
 
@@ -17,9 +17,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       [id, userId]
     );
     
-    if (sessionRes.rows.length === 0) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+    if (sessionRes.rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
     
     const sessionData = sessionRes.rows[0];
 
